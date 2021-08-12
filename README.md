@@ -10,9 +10,9 @@ print('Hello?')
   * Darknet Custom Yolo모델을 활용한 무기(망치, 칼)탐지 
     * [AlexeyAB](https://github.com/AlexeyAB)
   * 구글 MediaPipe를 활용한 손 동작 인식
-    * [mediapipe]https://github.com/google/mediapipe
+    * [Mediapipe](https://github.com/google/mediapipe)
   * 스마트팜(토이)
-    * [서버]https://nodered.org/
+    * [Node-RED](https://nodered.org/)
 
 ## 테이블 테스트
 0001|0010|0100|1000|
