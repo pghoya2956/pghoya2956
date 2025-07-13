@@ -1,0 +1,15 @@
+name: Generate Snake
+
+on:
+  schedule: [{ cron: "20 0 * * *" }]   # 매일 00:00 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Platane/snk@v3
+        with:
+          github_user_name: pghoya2956
+          outputs: |
+            ./output/snake.svg           # ← README에서 불러오는 경로
