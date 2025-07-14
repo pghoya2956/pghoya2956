@@ -60,6 +60,24 @@ GitLab 기반의 DevOps 솔루션을 설계하고, Kubernetes 환경에서 MLOps
 
 ## 📜 Certifications
 
+### International Certifications
+<div align="left">
+  <a href="https://www.credly.com/badges/fb7b66e0-bc45-4b52-94d9-3fd4353135fd">
+    <img src="https://images.credly.com/size/110x110/images/0e284c3f-5164-4b21-8660-0d84737941bc/image.png" alt="AWS Certified Solutions Architect – Associate" width="100" />
+  </a>
+  <a href="https://www.credly.com/badges/17c631c3-44d2-4670-b27f-a5c7e696fbff">
+    <img src="https://images.credly.com/size/110x110/images/8b8ed108-e77d-4396-ac59-2504583b9d54/cka_from_cncfsite__281_29.png" alt="CKA: Certified Kubernetes Administrator" width="100" />
+  </a>
+  <a href="https://www.credly.com/badges/fd23f25b-6ad9-4474-962d-38a178f79cca">
+    <img src="https://images.credly.com/size/110x110/images/00634f82-b07f-4bbd-a6bb-53de397fc3a6/image.png" alt="AWS Certified Cloud Practitioner" width="100" />
+  </a>
+</div>
+
+### Korean Certifications
+- 🎯 **정보처리기사** - 한국산업인력공단
+- 🌐 **네트워크관리사 2급** - 한국정보통신자격협회
+- 🐧 **리눅스마스터 2급** - 한국정보통신진흥협회
+
 <img src="https://img.shields.io/badge/정보처리기사-0052CC?style=for-the-badge&logo=github&logoColor=white" />
 <img src="https://img.shields.io/badge/AWS&nbsp;SAA-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
 <img src="https://img.shields.io/badge/CKA-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
