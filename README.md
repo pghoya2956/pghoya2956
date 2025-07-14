@@ -54,7 +54,7 @@ GitLab 기반의 DevOps 솔루션을 설계하고, Kubernetes 환경에서 MLOps
 <img src="https://skillicons.dev/icons?i=vscode,vim,notion" />
 
 **IDE:** Cursor  
-**Terminal:** Warp | Tmux | Zsh + Oh My Zsh  
+**Terminal:** Zsh + Oh My Zsh  
 **Kubernetes:** K9s | OpenLens  
 **Collaboration:** Slack | 1Password | Screen Studio
 
@@ -74,13 +74,7 @@ GitLab 기반의 DevOps 솔루션을 설계하고, Kubernetes 환경에서 MLOps
 </div>
 
 ### Korean Certifications
-- 🎯 **정보처리기사** - 한국산업인력공단
-- 🌐 **네트워크관리사 2급** - 한국정보통신자격협회
-- 🐧 **리눅스마스터 2급** - 한국정보통신진흥협회
-
 <img src="https://img.shields.io/badge/정보처리기사-0052CC?style=for-the-badge&logo=github&logoColor=white" />
-<img src="https://img.shields.io/badge/AWS&nbsp;SAA-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
-<img src="https://img.shields.io/badge/CKA-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
 <img src="https://img.shields.io/badge/네트워크관리사 2급-0066CC?style=for-the-badge" />
 <img src="https://img.shields.io/badge/리눅스마스터 2급-CC0033?style=for-the-badge&logo=linux&logoColor=white" />
 
