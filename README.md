@@ -69,7 +69,7 @@ GitLab 기반의 DevOps 솔루션을 설계하고, Kubernetes 환경에서 MLOps
     <img src="https://images.credly.com/size/110x110/images/8b8ed108-e77d-4396-ac59-2504583b9d54/cka_from_cncfsite__281_29.png" alt="CKA: Certified Kubernetes Administrator" width="100" />
   </a>
   <a href="https://www.credly.com/badges/fd23f25b-6ad9-4474-962d-38a178f79cca">
-    <img src="https://images.credly.com/size/110x110/images/00634f82-b07f-4bbd-a6bb-53de397fc3a6/image.png" alt="AWS Certified Cloud Practitioner" width="100" />
+    <img src="https://images.credly.com/size/110x110/images/d8750433-c4c3-4e7e-bafd-787b4106c78b/image.png" alt="AWS Certified Cloud Practitioner" width="100" />
   </a>
 </div>
 
