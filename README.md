@@ -1,4 +1,4 @@
-# DevOps Engineer | MLOps | Cloud Infrastructure
+# Linux & DevOps & MLOps Engineer
 
 ![](https://komarev.com/ghpvc/?username=pghoya2956&style=flat-square&color=blue)
 
