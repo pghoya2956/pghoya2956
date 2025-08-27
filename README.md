@@ -84,12 +84,12 @@ and ensure reliable service operations across various environments including air
 <summary><b>Projects & Achievements</b></summary>
 
 | Project | Tech Stack | Key Achievements | Period |
-|---------|------------|------------------|--------|
+<!-- |---------|------------|------------------|--------|
 | **Financial Kubernetes Platform Modernization** | K8s, GitLab CI/CD, ArgoCD | • Reduced legacy deployment time from 1hr to 10min<br/>• Built private K8s clusters<br/>• Automated review environments | 2024 |
 | **Enterprise CI/CD Pipeline Implementation** | GitLab, Docker, MSBuild | • Migrated from SVN to Git<br/>• Integrated multi-language build environments<br/>• Led DevOps training and adoption | 2023 |
 | **Cloud GitOps Pipeline** | NKS, ArgoCD, Helm | • Implemented GitOps auto-deployment<br/>• Ensured deployment consistency<br/>• Improved development velocity | 2023 |
 | **AI Video Analytics Platform** | YOLO v5/7, Kafka, MongoDB | • Implemented real-time object detection<br/>• Built distributed processing architecture<br/>• Human skeleton analysis | 2022 |
-| **Agricultural IoT Management System** | .NET, Docker, Grafana | • RTU data collection/control<br/>• Water level prediction model<br/>• Monitoring dashboard | 2022 |
+| **Agricultural IoT Management System** | .NET, Docker, Grafana | • RTU data collection/control<br/>• Water level prediction model<br/>• Monitoring dashboard | 2022 | -->
 
 </details>
 
@@ -98,7 +98,7 @@ and ensure reliable service operations across various environments including air
 <img height="180em" src="https://github-readme-stats.vercel.app/api?username=pghoya2956&show_icons=true&hide_border=true&theme=tokyonight&rank_icon=github" />
 <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=pghoya2956&layout=compact&hide_border=true&theme=tokyonight" />
 
-<img src="https://github-readme-streak-stats.herokuapp.com/?user=pghoya2956&hide_border=true&theme=tokyonight" />
+<img src="https://streak-stats.demolab.com/?user=pghoya2956&hide_border=true&theme=tokyonight" />
 
 <details>
 <summary><b>🎮 Fun Stuff & Activity Graph</b></summary>
