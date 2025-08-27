@@ -98,12 +98,12 @@ and ensure reliable service operations across various environments including air
 <img height="180em" src="https://github-readme-stats.vercel.app/api?username=pghoya2956&show_icons=true&hide_border=true&theme=tokyonight&rank_icon=github" />
 <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=pghoya2956&layout=compact&hide_border=true&theme=tokyonight" />
 
-<img src="https://streak-stats.demolab.com/?user=pghoya2956&hide_border=true&theme=tokyonight" />
+[![GitHub Streak](https://github-readme-streak-stats-9m8ugfa77-denvercoder1.vercel.app/?user=pghoya2956&hide_border=true&theme=tokyonight)](https://github.com/pghoya2956)
 
 <details>
 <summary><b>🎮 Fun Stuff & Activity Graph</b></summary>
 <br/>
-<img src="https://raw.githubusercontent.com/pghoya2956/pghoya2956/main/output/snake.svg" />
+<img src="https://raw.githubusercontent.com/pghoya2956/pghoya2956/main/output/snake.svg?cache=refresh" />
 <br/><br/>
 <img src="https://github-readme-activity-graph.vercel.app/graph?username=pghoya2956&bg_color=0d1117&color=7aa2f7&line=7dcfff&point=d5a3ff&hide_border=true" />
 </details>
