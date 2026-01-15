@@ -40,7 +40,8 @@
 
 ## GitHub Stats
 
-<p>
-  <img height="150em" src="https://github-readme-stats.vercel.app/api?username=pghoya2956&show_icons=true&hide_border=true&theme=tokyonight&rank_icon=github"/>
-  <img height="150em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=pghoya2956&layout=compact&hide_border=true&theme=tokyonight"/>
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/pghoya2956/pghoya2956/output/snake-dark.svg"/>
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/pghoya2956/pghoya2956/output/snake.svg"/>
+  <img alt="GitHub Contribution Snake" src="https://raw.githubusercontent.com/pghoya2956/pghoya2956/output/snake.svg"/>
+</picture>
