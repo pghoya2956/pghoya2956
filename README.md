@@ -8,12 +8,12 @@
 
 ## About
 
-GitLab 공식 파트너사에서 **금융권 DevOps 플랫폼 구축 및 컨설팅**을 담당하고 있습니다.
+인프라부터 제품 개발까지, **End-to-End DevOps**를 구현합니다.
 
-- 에어갭 환경 Cloud Native 전환
-- SVN → Git 마이그레이션
-- ITSM 연동 형상관리 체계
-- AI 코드 리뷰 파이프라인
+- Kubernetes 환경 CI/CD 파이프라인
+- MLOps / GPU 인프라
+- Observability 스택 구축
+- DevSecOps 보안 자동화
 
 ## Tech Stack
 
