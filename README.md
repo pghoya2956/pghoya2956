@@ -2,8 +2,9 @@
 
 **DevOps Engineer** | End-to-End DevOps. 인프라부터 AI까지.
 
-[![Portfolio](https://img.shields.io/badge/Portfolio-heeho.net-4f46e5?style=flat-square)](https://www.heeho.net/)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/heeho-engineer)
+[![Portfolio](https://img.shields.io/badge/Portfolio-heeho.net-4f46e5?style=for-the-badge)](https://www.heeho.net/)
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/heeho-engineer)
 ![Profile Views](https://komarev.com/ghpvc/?username=pghoya2956&style=flat-square&color=blue)
 
 ## About
