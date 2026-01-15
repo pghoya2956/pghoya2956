@@ -1,20 +1,46 @@
-# DevOps Engineer
+# Heeho Lim
 
-![](https://komarev.com/ghpvc/?username=pghoya2956&style=flat-square&color=blue)
+**DevOps Engineer** | End-to-End DevOps. 인프라부터 AI까지.
 
-**End-to-End DevOps. 인프라부터 AI까지.**
+[![Portfolio](https://img.shields.io/badge/Portfolio-heeho.net-4f46e5?style=flat-square)](https://www.heeho.net/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/heeho-engineer)
+![Profile Views](https://komarev.com/ghpvc/?username=pghoya2956&style=flat-square&color=blue)
 
-GitLab 기반 DevOps 플랫폼 구축 및 컨설팅 | Kubernetes 환경 현대화 | AI/MLOps 파이프라인
+## About
 
-## Portfolio
+GitLab 공식 파트너사에서 **금융권 DevOps 플랫폼 구축 및 컨설팅**을 담당하고 있습니다.
 
-**[heeho.net](https://www.heeho.net/)**
+- 에어갭 환경 Cloud Native 전환
+- SVN → Git 마이그레이션
+- ITSM 연동 형상관리 체계
+- AI 코드 리뷰 파이프라인
 
 ## Tech Stack
 
-<img src="https://skillicons.dev/icons?i=kubernetes,docker,aws,gitlab,terraform,prometheus,grafana,python,linux,bash" />
+<p>
+  <img src="https://img.shields.io/badge/Kubernetes-326CE5?style=flat-square&logo=kubernetes&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/GitLab-FC6D26?style=flat-square&logo=gitlab&logoColor=white"/>
+  <img src="https://img.shields.io/badge/ArgoCD-EF7B4D?style=flat-square&logo=argo&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Terraform-7B42BC?style=flat-square&logo=terraform&logoColor=white"/>
+  <img src="https://img.shields.io/badge/AWS-232F3E?style=flat-square&logo=amazonwebservices&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Prometheus-E6522C?style=flat-square&logo=prometheus&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Grafana-F46800?style=flat-square&logo=grafana&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black"/>
+</p>
+
+## Certifications
+
+<p>
+  <a href="https://www.credly.com/badges/17c631c3-44d2-4670-b27f-a5c7e696fbff"><img src="https://images.credly.com/size/100x100/images/8b8ed108-e77d-4396-ac59-2504583b9d54/cka_from_cncfsite__281_29.png" alt="CKA" width="80"/></a>
+  <a href="https://www.credly.com/badges/fb7b66e0-bc45-4b52-94d9-3fd4353135fd"><img src="https://images.credly.com/size/100x100/images/0e284c3f-5164-4b21-8660-0d84737941bc/image.png" alt="AWS SAA" width="80"/></a>
+  <a href="https://www.credly.com/badges/fd23f25b-6ad9-4474-962d-38a178f79cca"><img src="https://images.credly.com/size/100x100/images/d8750433-c4c3-4e7e-bafd-787b4106c78b/image.png" alt="GitLab PTE" width="80"/></a>
+</p>
 
 ## GitHub Stats
 
-<img height="150em" src="https://github-readme-stats.vercel.app/api?username=pghoya2956&show_icons=true&hide_border=true&theme=tokyonight&rank_icon=github" />
-<img height="150em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=pghoya2956&layout=compact&hide_border=true&theme=tokyonight" />
+<p>
+  <img height="150em" src="https://github-readme-stats.vercel.app/api?username=pghoya2956&show_icons=true&hide_border=true&theme=tokyonight&rank_icon=github"/>
+  <img height="150em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=pghoya2956&layout=compact&hide_border=true&theme=tokyonight"/>
+</p>
