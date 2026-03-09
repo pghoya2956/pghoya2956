@@ -133,10 +133,31 @@ jobs:
               f.write(content)
           PYEOF
 
+          # Patch 4: lib/auth/github.go — Change "token" to "Bearer" in Authorization header
+          # Authentik's GitHub compatibility endpoints only accept "Bearer" format.
+          # Teleport sends "Authorization: token xxx" (GitHub legacy), change to "Bearer xxx".
+          python3 << 'PYEOF'
+          with open("lib/auth/github.go", "r") as f:
+              content = f.read()
+
+          old_auth = 'request.Header.Set("Authorization", fmt.Sprintf("token %v", c.token))'
+          new_auth = 'request.Header.Set("Authorization", fmt.Sprintf("Bearer %v", c.token))'
+
+          if old_auth in content:
+              content = content.replace(old_auth, new_auth)
+              print("Patch 4 applied: lib/auth/github.go (token → Bearer)")
+          else:
+              print("Patch 4 skipped: pattern not found")
+
+          with open("lib/auth/github.go", "w") as f:
+              f.write(content)
+          PYEOF
+
           echo "=== Verify patches ==="
           grep -n "IsOSSBuild" lib/services/github.go && echo "WARNING" || echo "Patch 1 OK"
           grep -n "Spec.EndpointURL" api/types/github.go && echo "Patch 2 OK" || echo "WARNING: Patch 2 failed"
           grep -n "patched: skip" lib/auth/github.go && echo "Patch 3 OK" || echo "Patch 3 skipped"
+          grep -n "Bearer" lib/auth/github.go && echo "Patch 4 OK" || echo "WARNING: Patch 4 failed"
 
       - name: Create Dockerfile
         run: |
