@@ -42,9 +42,13 @@ jobs:
         run: |
           cd /tmp/teleport
           python3 << 'PYEOF'
-          with open("lib/services/github.go", "r") as f:
-              lines = f.readlines()
+          import re
 
+          with open("lib/services/github.go", "r") as f:
+              content = f.read()
+              lines = content.split('\n')
+
+          # Step 1: Remove IsOSSBuild() blocks
           new_lines = []
           skip = False
           brace_count = 0
@@ -60,8 +64,20 @@ jobs:
                   continue
               new_lines.append(line)
 
+          patched = '\n'.join(new_lines)
+
+          # Step 2: Remove unused imports (fmt, modules)
+          # Check if "fmt" is still used (besides import line)
+          if patched.count('fmt.') == 0:
+              patched = re.sub(r'\n\t"fmt"\n', '\n', patched)
+          # Check if "modules" is still used (besides import line)
+          if patched.count('modules.') == 0:
+              patched = re.sub(r'\n\t"github\.com/gravitational/teleport/lib/modules"\n', '\n', patched)
+
           with open("lib/services/github.go", "w") as f:
-              f.writelines(new_lines)
+              f.write(patched)
+
+          print("Patch applied successfully")
           PYEOF
 
           echo "=== Verify patch ==="
