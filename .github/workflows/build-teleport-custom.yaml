@@ -1,0 +1,103 @@
+name: Build Teleport Custom Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      teleport_version:
+        description: 'Teleport version tag (e.g. v18.6.4)'
+        required: true
+        default: 'v18.6.4'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: pghoya2956/teleport-custom
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Clone Teleport source
+        run: |
+          git clone --depth 1 --branch ${{ github.event.inputs.teleport_version }} \
+            https://github.com/gravitational/teleport.git /tmp/teleport
+
+      - name: Apply patch — remove endpoint_url Enterprise check
+        run: |
+          cd /tmp/teleport
+          python3 << 'PYEOF'
+          with open("lib/services/github.go", "r") as f:
+              lines = f.readlines()
+
+          new_lines = []
+          skip = False
+          brace_count = 0
+          for line in lines:
+              if 'IsOSSBuild()' in line and 'EndpointURL' not in line:
+                  skip = True
+                  brace_count = line.count('{') - line.count('}')
+                  continue
+              if skip:
+                  brace_count += line.count('{') - line.count('}')
+                  if brace_count <= 0:
+                      skip = False
+                  continue
+              new_lines.append(line)
+
+          with open("lib/services/github.go", "w") as f:
+              f.writelines(new_lines)
+          PYEOF
+
+          echo "=== Verify patch ==="
+          grep -n "IsOSSBuild" lib/services/github.go && echo "WARNING: IsOSSBuild still present" || echo "Patch OK: IsOSSBuild check removed"
+          grep -n "ErrRequiresEnterprise" lib/services/github.go | grep -i endpoint && echo "WARNING: endpoint check still present" || echo "Patch OK: no endpoint Enterprise check"
+
+      - name: Create Dockerfile
+        run: |
+          cat > /tmp/teleport/Dockerfile.custom << 'DOCKERFILE'
+          FROM golang:1.24-bookworm AS builder
+          WORKDIR /teleport
+          COPY . .
+          RUN apt-get update && apt-get install -y libpam0g-dev binaryen && \
+              curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+              apt-get install -y nodejs && \
+              corepack enable
+          RUN make full FIDO2=no PIV=no ROLETESTER=no
+
+          FROM public.ecr.aws/gravitational/teleport-distroless:18.6.4
+          COPY --from=builder /teleport/build/teleport /usr/local/bin/teleport
+          COPY --from=builder /teleport/build/tctl /usr/local/bin/tctl
+          COPY --from=builder /teleport/build/tbot /usr/local/bin/tbot
+          DOCKERFILE
+
+      - name: Extract version tag
+        id: version
+        run: echo "tag=${{ github.event.inputs.teleport_version }}" | sed 's/^v/tag=/' >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: /tmp/teleport
+          file: /tmp/teleport/Dockerfile.custom
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
