@@ -38,9 +38,11 @@ jobs:
           git clone --depth 1 --branch ${{ github.event.inputs.teleport_version }} \
             https://github.com/gravitational/teleport.git /tmp/teleport
 
-      - name: Apply patch — remove endpoint_url Enterprise check
+      - name: Apply patch — remove endpoint_url Enterprise restrictions
         run: |
           cd /tmp/teleport
+
+          # Patch 1: lib/services/github.go — Remove IsOSSBuild() validation block
           python3 << 'PYEOF'
           import re
 
@@ -48,7 +50,6 @@ jobs:
               content = f.read()
               lines = content.split('\n')
 
-          # Step 1: Remove IsOSSBuild() blocks
           new_lines = []
           skip = False
           brace_count = 0
@@ -66,23 +67,76 @@ jobs:
 
           patched = '\n'.join(new_lines)
 
-          # Step 2: Remove unused imports (fmt, modules)
-          # Check if "fmt" is still used (besides import line)
           if patched.count('fmt.') == 0:
               patched = re.sub(r'\n\t"fmt"\n', '\n', patched)
-          # Check if "modules" is still used (besides import line)
           if patched.count('modules.') == 0:
               patched = re.sub(r'\n\t"github\.com/gravitational/teleport/lib/modules"\n', '\n', patched)
 
           with open("lib/services/github.go", "w") as f:
               f.write(patched)
-
-          print("Patch applied successfully")
+          print("Patch 1 applied: lib/services/github.go")
           PYEOF
 
-          echo "=== Verify patch ==="
-          grep -n "IsOSSBuild" lib/services/github.go && echo "WARNING: IsOSSBuild still present" || echo "Patch OK: IsOSSBuild check removed"
-          grep -n "ErrRequiresEnterprise" lib/services/github.go | grep -i endpoint && echo "WARNING: endpoint check still present" || echo "Patch OK: no endpoint Enterprise check"
+          # Patch 2: api/types/github.go — Fix hardcoded GetEndpointURL/GetAPIEndpointURL
+          # These getters always return github.com constants, ignoring Spec values.
+          # Change them to return Spec values with fallback to defaults.
+          python3 << 'PYEOF'
+          with open("api/types/github.go", "r") as f:
+              content = f.read()
+
+          # Replace GetEndpointURL
+          old_get_endpoint = '''func (c *GithubConnectorV3) GetEndpointURL() string {
+          	return GithubURL
+          }'''
+          new_get_endpoint = '''func (c *GithubConnectorV3) GetEndpointURL() string {
+          	if c.Spec.EndpointURL != "" {
+          		return c.Spec.EndpointURL
+          	}
+          	return GithubURL
+          }'''
+
+          # Replace GetAPIEndpointURL
+          old_get_api = '''func (c *GithubConnectorV3) GetAPIEndpointURL() string {
+          	return GithubAPIURL
+          }'''
+          new_get_api = '''func (c *GithubConnectorV3) GetAPIEndpointURL() string {
+          	if c.Spec.APIEndpointURL != "" {
+          		return c.Spec.APIEndpointURL
+          	}
+          	return GithubAPIURL
+          }'''
+
+          content = content.replace(old_get_endpoint, new_get_endpoint)
+          content = content.replace(old_get_api, new_get_api)
+
+          with open("api/types/github.go", "w") as f:
+              f.write(content)
+          print("Patch 2 applied: api/types/github.go")
+          PYEOF
+
+          # Patch 3: lib/auth/github.go — Remove checkGithubOrgSSOSupport Enterprise-only bypass
+          python3 << 'PYEOF'
+          with open("lib/auth/github.go", "r") as f:
+              content = f.read()
+
+          # Make checkGithubOrgSSOSupport always return nil (skip org SSO check)
+          old = 'version := modules.GetModules().BuildType()\n\tif version == modules.BuildEnterprise {\n\t\treturn nil\n\t}'
+          new = 'return nil // patched: skip org SSO check for custom endpoint\n\tversion := modules.GetModules().BuildType()\n\tif version == modules.BuildEnterprise {\n\t\treturn nil\n\t}'
+
+          if old in content:
+              content = content.replace(old, new)
+              print("Patch 3 applied: lib/auth/github.go (checkGithubOrgSSOSupport)")
+          else:
+              print("Patch 3 skipped: pattern not found in lib/auth/github.go")
+
+          with open("lib/auth/github.go", "w") as f:
+              f.write(content)
+          PYEOF
+
+          echo "=== Verify patches ==="
+          grep -n "IsOSSBuild" lib/services/github.go && echo "WARNING" || echo "Patch 1 OK"
+          grep -n "Spec.EndpointURL" api/types/github.go && echo "Patch 2 OK" || echo "WARNING: Patch 2 failed"
+          grep -n "patched: skip" lib/auth/github.go && echo "Patch 3 OK" || echo "Patch 3 skipped"
 
       - name: Create Dockerfile
         run: |
@@ -108,7 +162,11 @@ jobs:
 
       - name: Extract version tag
         id: version
-        run: echo "tag=${{ github.event.inputs.teleport_version }}" | sed 's/^v/tag=/' >> $GITHUB_OUTPUT
+        run: |
+          RAW="${{ github.event.inputs.teleport_version }}"
+          TAG="${RAW#v}"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "vtag=${RAW}" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -118,6 +176,7 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.vtag }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
