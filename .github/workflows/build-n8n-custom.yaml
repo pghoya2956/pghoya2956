@@ -127,25 +127,35 @@ jobs:
               match_hint="BooleanLicenseFeature"
           )
 
-          # --- Patch 2: License.isLicensed() → return true (except SHOW_NON_PROD_BANNER)
-          # Legacy path: deprecated but still active during migration
+          # --- Patch 2: LicenseState.getValue() → unlock quotas + planName
+          # Quotas default to 0 (disabled) without license: maxTeamProjects, aiCredits, evaluations
+          # 'planName' → 'Enterprise', 'quota:*' → -1 (unlimited), rest → original
           ok2 = patch_method(
+              "packages/@n8n/backend-common/src/license-state.ts",
+              "getValue",
+              "this.assertProvider();\n\t\tif (feature === 'planName') return 'Enterprise' as any;\n\t\tif (typeof feature === 'string' && feature.startsWith('quota:')) return -1 as any;\n\t\treturn this.licenseProvider.getValue(feature);",
+              match_hint="FeatureReturnType"
+          )
+
+          # --- Patch 3: License.isLicensed() → return true (except SHOW_NON_PROD_BANNER)
+          # Legacy path: deprecated but still active during migration
+          ok3 = patch_method(
               "packages/cli/src/license.ts",
               "isLicensed",
               "if (feature === 'feat:showNonProdBanner') return false;\n\t\treturn true;",
               match_hint="BooleanLicenseFeature"
           )
 
-          # --- Patch 3: License.getPlanName() → return 'Enterprise' ---
-          # UI display: shows "Enterprise" instead of "Community" in Settings
-          ok3 = patch_method(
+          # --- Patch 4: License.getPlanName() → return 'Enterprise'
+          # Legacy path for UI display
+          ok4 = patch_method(
               "packages/cli/src/license.ts",
               "getPlanName",
               "return 'Enterprise';",
           )
 
           # Summary
-          results = [("LicenseState.isLicensed", ok1), ("License.isLicensed", ok2), ("License.getPlanName", ok3)]
+          results = [("LicenseState.isLicensed", ok1), ("LicenseState.getValue", ok2), ("License.isLicensed", ok3), ("License.getPlanName", ok4)]
           failed = [name for name, ok in results if not ok]
           if failed:
               print(f"\nFAILED patches: {', '.join(failed)}")
@@ -159,8 +169,9 @@ jobs:
           echo ""
           echo "=== Verify patches ==="
           grep -n "return true" packages/@n8n/backend-common/src/license-state.ts && echo "Patch 1 OK" || echo "WARNING: Patch 1 failed"
-          grep -n "return true" packages/cli/src/license.ts && echo "Patch 2 OK" || echo "WARNING: Patch 2 failed"
-          grep -n "'Enterprise'" packages/cli/src/license.ts && echo "Patch 3 OK" || echo "WARNING: Patch 3 failed"
+          grep -n "'Enterprise'" packages/@n8n/backend-common/src/license-state.ts && echo "Patch 2 OK" || echo "WARNING: Patch 2 failed"
+          grep -n "return true" packages/cli/src/license.ts && echo "Patch 3 OK" || echo "WARNING: Patch 3 failed"
+          grep -n "'Enterprise'" packages/cli/src/license.ts && echo "Patch 4 OK" || echo "WARNING: Patch 4 failed"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
