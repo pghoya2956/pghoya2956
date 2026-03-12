@@ -1,0 +1,229 @@
+name: Build n8n Custom Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      n8n_version:
+        description: 'n8n version (e.g. 2.9.4)'
+        required: true
+        default: '2.9.4'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: pghoya2956/n8n-custom
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up QEMU (for ARM64)
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Clone n8n source
+        run: |
+          git clone --depth 1 --branch "n8n@${{ github.event.inputs.n8n_version }}" \
+            https://github.com/n8n-io/n8n.git /tmp/n8n
+          echo "Cloned n8n@${{ github.event.inputs.n8n_version }}"
+
+      - name: Apply license patches
+        working-directory: /tmp/n8n
+        run: |
+          # Write patch script
+          cat > /tmp/patch.py << 'PYEOF'
+          import sys, re
+
+          def patch_method(file_path, method_name, new_body, match_hint=None):
+              """Find a method by name and replace its body using brace counting.
+              method_name: the method name to search for (e.g. 'isLicensed')
+              new_body: the new method body (just the content between braces)
+              match_hint: additional string that must appear on the signature line
+              """
+              with open(file_path, 'r') as f:
+                  lines = f.readlines()
+
+              # Find the method signature line
+              start_line = None
+              for i, line in enumerate(lines):
+                  if method_name + '(' in line:
+                      if match_hint and match_hint not in line:
+                          continue
+                      # Check this looks like a method definition (has opening brace on same or next line)
+                      if '{' in line or (i + 1 < len(lines) and '{' in lines[i + 1]):
+                          start_line = i
+                          break
+
+              if start_line is None:
+                  print(f"WARNING: Method '{method_name}' not found in {file_path}")
+                  return False
+
+              # Find the opening brace
+              brace_line = start_line
+              while '{' not in lines[brace_line]:
+                  brace_line += 1
+
+              # Count braces to find the closing brace
+              brace_count = 0
+              end_line = None
+              for i in range(brace_line, len(lines)):
+                  brace_count += lines[i].count('{') - lines[i].count('}')
+                  if brace_count == 0:
+                      end_line = i
+                      break
+
+              if end_line is None:
+                  print(f"WARNING: Could not find closing brace for '{method_name}' in {file_path}")
+                  return False
+
+              # Extract indentation from the signature line
+              indent = ''
+              for ch in lines[start_line]:
+                  if ch in ' \t':
+                      indent += ch
+                  else:
+                      break
+
+              # Get the signature (everything from method name to opening brace)
+              sig_text = ''
+              for i in range(start_line, brace_line + 1):
+                  sig_text += lines[i]
+
+              # Build replacement: signature + new body + closing brace
+              replacement = sig_text.rstrip() + '\n'
+              replacement = replacement.rstrip('{').rstrip() + ' {\n'
+              replacement += indent + '\t' + new_body + '\n'
+              replacement += indent + '}\n'
+
+              # Replace
+              new_lines = lines[:start_line] + [replacement] + lines[end_line + 1:]
+
+              with open(file_path, 'w') as f:
+                  f.writelines(new_lines)
+
+              print(f"Patched: {file_path} :: {method_name}() → {new_body.strip()}")
+              return True
+
+          # --- Patch 1: LicenseState.isLicensed() → return true ---
+          # Primary gate: all new code paths use LicenseState
+          ok1 = patch_method(
+              "packages/@n8n/backend-common/src/license-state.ts",
+              "isLicensed",
+              "return true;",
+              match_hint="BooleanLicenseFeature"
+          )
+
+          # --- Patch 2: License.isLicensed() → return true ---
+          # Legacy path: deprecated but still active during migration
+          ok2 = patch_method(
+              "packages/cli/src/license.ts",
+              "isLicensed",
+              "return true;",
+              match_hint="BooleanLicenseFeature"
+          )
+
+          # --- Patch 3: License.getPlanName() → return 'Enterprise' ---
+          # UI display: shows "Enterprise" instead of "Community" in Settings
+          ok3 = patch_method(
+              "packages/cli/src/license.ts",
+              "getPlanName",
+              "return 'Enterprise';",
+          )
+
+          # Summary
+          results = [("LicenseState.isLicensed", ok1), ("License.isLicensed", ok2), ("License.getPlanName", ok3)]
+          failed = [name for name, ok in results if not ok]
+          if failed:
+              print(f"\nFAILED patches: {', '.join(failed)}")
+              sys.exit(1)
+          else:
+              print("\nAll patches applied successfully")
+          PYEOF
+
+          python3 /tmp/patch.py
+
+          echo ""
+          echo "=== Verify patches ==="
+          grep -n "return true" packages/@n8n/backend-common/src/license-state.ts && echo "Patch 1 OK" || echo "WARNING: Patch 1 failed"
+          grep -n "return true" packages/cli/src/license.ts && echo "Patch 2 OK" || echo "WARNING: Patch 2 failed"
+          grep -n "'Enterprise'" packages/cli/src/license.ts && echo "Patch 3 OK" || echo "WARNING: Patch 3 failed"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: /tmp/n8n/.nvmrc
+          node-version: '24'
+
+      - name: Install pnpm and build
+        working-directory: /tmp/n8n
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm --filter=n8n --prod --legacy deploy --no-optional /tmp/compiled
+
+      - name: Prepare Docker context
+        run: |
+          NODE_VER=$(node -e "console.log(process.version.slice(1))")
+          N8N_VER="${{ github.event.inputs.n8n_version }}"
+          echo "Node.js: ${NODE_VER}, n8n: ${N8N_VER}"
+
+          cp /tmp/n8n/docker/images/n8n/docker-entrypoint.sh /tmp/docker-entrypoint.sh
+          chmod +x /tmp/docker-entrypoint.sh
+
+          cat > /tmp/Dockerfile << EOF
+          FROM node:${NODE_VER}-alpine AS builder
+          COPY compiled /usr/local/lib/node_modules/n8n
+          RUN apk add --no-cache python3 make g++ && \
+              cd /usr/local/lib/node_modules/n8n && \
+              npm rebuild sqlite3
+
+          FROM n8nio/base:${NODE_VER}
+          ENV NODE_ENV=production
+          ENV N8N_RELEASE_TYPE=custom
+          ENV SHELL=/bin/sh
+          WORKDIR /home/node
+          COPY --from=builder /usr/local/lib/node_modules/n8n /usr/local/lib/node_modules/n8n
+          COPY docker-entrypoint.sh /
+          RUN ln -s /usr/local/lib/node_modules/n8n/bin/n8n /usr/local/bin/n8n && \
+              mkdir -p /home/node/.n8n && \
+              chown -R node:node /home/node && \
+              rm -rf /root/.npm /tmp/*
+          EXPOSE 5678/tcp
+          USER node
+          ENTRYPOINT ["tini", "--", "/docker-entrypoint.sh"]
+          LABEL org.opencontainers.image.title="n8n-custom" \
+                org.opencontainers.image.description="n8n with Enterprise features unlocked" \
+                org.opencontainers.image.source="https://github.com/n8n-io/n8n" \
+                org.opencontainers.image.version=${N8N_VER}
+          EOF
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: /tmp
+          file: /tmp/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.n8n_version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
