@@ -101,14 +101,10 @@ jobs:
                   else:
                       break
 
-              # Get the signature (everything from method name to opening brace)
-              sig_text = ''
+              # Build replacement: keep original signature lines, replace body only
+              replacement = ''
               for i in range(start_line, brace_line + 1):
-                  sig_text += lines[i]
-
-              # Build replacement: signature + new body + closing brace
-              replacement = sig_text.rstrip() + '\n'
-              replacement = replacement.rstrip('{').rstrip() + ' {\n'
+                  replacement += lines[i]
               replacement += indent + '\t' + new_body + '\n'
               replacement += indent + '}\n'
 
@@ -168,7 +164,6 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: /tmp/n8n/.nvmrc
           node-version: '24'
 
       - name: Install pnpm and build
