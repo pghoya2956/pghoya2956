@@ -146,16 +146,25 @@ jobs:
               match_hint="BooleanLicenseFeature"
           )
 
-          # --- Patch 4: License.getPlanName() → return 'Enterprise'
-          # Legacy path for UI display
+          # --- Patch 4: License.getValue() → unlock quotas + planName (legacy path)
+          # frontend.service.ts uses this.license.getTeamProjectLimit() → this.getValue(...)
           ok4 = patch_method(
+              "packages/cli/src/license.ts",
+              "getValue",
+              "if (feature === 'planName') return 'Enterprise' as any;\n\t\tif (typeof feature === 'string' && feature.startsWith('quota:')) return -1 as any;\n\t\treturn this.manager?.getFeatureValue(feature) as any;",
+              match_hint="FeatureReturnType"
+          )
+
+          # --- Patch 5: License.getPlanName() → return 'Enterprise'
+          # Direct callers of getPlanName()
+          ok5 = patch_method(
               "packages/cli/src/license.ts",
               "getPlanName",
               "return 'Enterprise';",
           )
 
           # Summary
-          results = [("LicenseState.isLicensed", ok1), ("LicenseState.getValue", ok2), ("License.isLicensed", ok3), ("License.getPlanName", ok4)]
+          results = [("LicenseState.isLicensed", ok1), ("LicenseState.getValue", ok2), ("License.isLicensed", ok3), ("License.getValue", ok4), ("License.getPlanName", ok5)]
           failed = [name for name, ok in results if not ok]
           if failed:
               print(f"\nFAILED patches: {', '.join(failed)}")
@@ -171,7 +180,8 @@ jobs:
           grep -n "return true" packages/@n8n/backend-common/src/license-state.ts && echo "Patch 1 OK" || echo "WARNING: Patch 1 failed"
           grep -n "'Enterprise'" packages/@n8n/backend-common/src/license-state.ts && echo "Patch 2 OK" || echo "WARNING: Patch 2 failed"
           grep -n "return true" packages/cli/src/license.ts && echo "Patch 3 OK" || echo "WARNING: Patch 3 failed"
-          grep -n "'Enterprise'" packages/cli/src/license.ts && echo "Patch 4 OK" || echo "WARNING: Patch 4 failed"
+          grep -n "quota:" packages/cli/src/license.ts | grep "\-1" && echo "Patch 4 OK" || echo "WARNING: Patch 4 failed"
+          grep -n "'Enterprise'" packages/cli/src/license.ts && echo "Patch 5 OK" || echo "WARNING: Patch 5 failed"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
