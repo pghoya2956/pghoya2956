@@ -176,9 +176,10 @@ jobs:
 
       - name: Prepare Docker context
         run: |
-          NODE_VER=$(node -e "console.log(process.version.slice(1))")
+          # Extract NODE_VERSION from n8n's own Dockerfile (not the runner's version)
+          NODE_VER=$(grep -oP 'ARG NODE_VERSION=\K[0-9.]+' /tmp/n8n/docker/images/n8n/Dockerfile)
           N8N_VER="${{ github.event.inputs.n8n_version }}"
-          echo "Node.js: ${NODE_VER}, n8n: ${N8N_VER}"
+          echo "Node.js (from n8n Dockerfile): ${NODE_VER}, n8n: ${N8N_VER}"
 
           cp /tmp/n8n/docker/images/n8n/docker-entrypoint.sh /tmp/docker-entrypoint.sh
           chmod +x /tmp/docker-entrypoint.sh
