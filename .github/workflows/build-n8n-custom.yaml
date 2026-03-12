@@ -63,7 +63,7 @@ jobs:
               # Find the method signature line
               start_line = None
               for i, line in enumerate(lines):
-                  if method_name + '(' in line:
+                  if method_name + '(' in line or method_name + '<' in line:
                       if match_hint and match_hint not in line:
                           continue
                       # Check this looks like a method definition (has opening brace on same or next line)
