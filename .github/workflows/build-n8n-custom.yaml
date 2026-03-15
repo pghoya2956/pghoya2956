@@ -117,13 +117,14 @@ jobs:
               print(f"Patched: {file_path} :: {method_name}() → {new_body.strip()}")
               return True
 
-          # --- Patch 1: LicenseState.isLicensed() → return true (except SHOW_NON_PROD_BANNER)
+          # --- Patch 1: LicenseState.isLicensed() → return true (with exclusions)
           # Primary gate: all new code paths use LicenseState
-          # SHOW_NON_PROD_BANNER must return false to hide "not licensed for production" banner
+          # SHOW_NON_PROD_BANNER → false: hide "not licensed for production" banner
+          # API_DISABLED → false: keep Public API enabled (true = API disabled, inverse logic)
           ok1 = patch_method(
               "packages/@n8n/backend-common/src/license-state.ts",
               "isLicensed",
-              "if (typeof feature === 'string' && feature === 'feat:showNonProdBanner') return false;\n\t\treturn true;",
+              "if (typeof feature === 'string' && (feature === 'feat:showNonProdBanner' || feature === 'feat:apiDisabled')) return false;\n\t\treturn true;",
               match_hint="BooleanLicenseFeature"
           )
 
@@ -137,12 +138,13 @@ jobs:
               match_hint="FeatureReturnType"
           )
 
-          # --- Patch 3: License.isLicensed() → return true (except SHOW_NON_PROD_BANNER)
+          # --- Patch 3: License.isLicensed() → return true (with exclusions)
           # Legacy path: deprecated but still active during migration
+          # Same exclusions as Patch 1: showNonProdBanner + apiDisabled → false
           ok3 = patch_method(
               "packages/cli/src/license.ts",
               "isLicensed",
-              "if (feature === 'feat:showNonProdBanner') return false;\n\t\treturn true;",
+              "if (feature === 'feat:showNonProdBanner' || feature === 'feat:apiDisabled') return false;\n\t\treturn true;",
               match_hint="BooleanLicenseFeature"
           )
 
