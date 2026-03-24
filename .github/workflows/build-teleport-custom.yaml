@@ -189,12 +189,205 @@ jobs:
               print("WARNING: Patch 5 failed — VerifyAccessListCreateLimit not found")
           PYEOF
 
+          # Patch 6: Create AccessListService gRPC handler for OSS
+          # The gRPC handler is Enterprise-only. Create a minimal OSS handler
+          # that delegates to the backend AccessListsInternal service.
+          cat > lib/auth/accesslist_service_oss.go << 'GOEOF'
+          package auth
+
+          import (
+          	"context"
+
+          	"github.com/gravitational/trace"
+          	"google.golang.org/protobuf/types/known/emptypb"
+
+          	accesslistv1 "github.com/gravitational/teleport/api/gen/proto/go/teleport/accesslist/v1"
+          	"github.com/gravitational/teleport/api/types/accesslist"
+          	conv "github.com/gravitational/teleport/api/types/accesslist/convert/v1"
+          	"github.com/gravitational/teleport/lib/services"
+          )
+
+          // AccessListServiceOSS is a minimal gRPC handler for AccessListService.
+          type AccessListServiceOSS struct {
+          	accesslistv1.UnimplementedAccessListServiceServer
+          	svc services.AccessListsInternal
+          }
+
+          // NewAccessListServiceOSS creates a new AccessListServiceOSS.
+          func NewAccessListServiceOSS(svc services.AccessListsInternal) *AccessListServiceOSS {
+          	return &AccessListServiceOSS{svc: svc}
+          }
+
+          func (s *AccessListServiceOSS) GetAccessLists(ctx context.Context, _ *accesslistv1.GetAccessListsRequest) (*accesslistv1.GetAccessListsResponse, error) {
+          	lists, err := s.svc.GetAccessLists(ctx)
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	out := make([]*accesslistv1.AccessList, 0, len(lists))
+          	for _, l := range lists {
+          		out = append(out, conv.ToProto(l))
+          	}
+          	return &accesslistv1.GetAccessListsResponse{AccessLists: out}, nil
+          }
+
+          func (s *AccessListServiceOSS) ListAccessLists(ctx context.Context, req *accesslistv1.ListAccessListsRequest) (*accesslistv1.ListAccessListsResponse, error) {
+          	lists, next, err := s.svc.ListAccessLists(ctx, int(req.GetPageSize()), req.GetNextToken())
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	out := make([]*accesslistv1.AccessList, 0, len(lists))
+          	for _, l := range lists {
+          		out = append(out, conv.ToProto(l))
+          	}
+          	return &accesslistv1.ListAccessListsResponse{AccessLists: out, NextToken: next}, nil
+          }
+
+          func (s *AccessListServiceOSS) GetAccessList(ctx context.Context, req *accesslistv1.GetAccessListRequest) (*accesslistv1.AccessList, error) {
+          	al, err := s.svc.GetAccessList(ctx, req.GetName())
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	return conv.ToProto(al), nil
+          }
+
+          func (s *AccessListServiceOSS) UpsertAccessList(ctx context.Context, req *accesslistv1.UpsertAccessListRequest) (*accesslistv1.AccessList, error) {
+          	al, err := conv.FromProto(req.GetAccessList())
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	result, err := s.svc.UpsertAccessList(ctx, al)
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	return conv.ToProto(result), nil
+          }
+
+          func (s *AccessListServiceOSS) DeleteAccessList(ctx context.Context, req *accesslistv1.DeleteAccessListRequest) (*emptypb.Empty, error) {
+          	if err := s.svc.DeleteAccessList(ctx, req.GetName()); err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	return &emptypb.Empty{}, nil
+          }
+
+          func (s *AccessListServiceOSS) ListAccessListMembers(ctx context.Context, req *accesslistv1.ListAccessListMembersRequest) (*accesslistv1.ListAccessListMembersResponse, error) {
+          	members, next, err := s.svc.ListAccessListMembers(ctx, req.GetAccessList(), int(req.GetPageSize()), req.GetPageToken())
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	out := make([]*accesslistv1.Member, 0, len(members))
+          	for _, m := range members {
+          		out = append(out, conv.ToMemberProto(m))
+          	}
+          	return &accesslistv1.ListAccessListMembersResponse{Members: out, NextPageToken: next}, nil
+          }
+
+          func (s *AccessListServiceOSS) UpsertAccessListMember(ctx context.Context, req *accesslistv1.UpsertAccessListMemberRequest) (*accesslistv1.Member, error) {
+          	member, err := conv.FromMemberProto(req.GetMember())
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	result, err := s.svc.UpsertAccessListMember(ctx, member)
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	return conv.ToMemberProto(result), nil
+          }
+
+          func (s *AccessListServiceOSS) DeleteAccessListMember(ctx context.Context, req *accesslistv1.DeleteAccessListMemberRequest) (*emptypb.Empty, error) {
+          	if err := s.svc.DeleteAccessListMember(ctx, req.GetAccessList(), req.GetMemberName()); err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	return &emptypb.Empty{}, nil
+          }
+
+          func (s *AccessListServiceOSS) CountAccessListMembers(ctx context.Context, req *accesslistv1.CountAccessListMembersRequest) (*accesslistv1.CountAccessListMembersResponse, error) {
+          	membersCount, listCount, err := s.svc.CountAccessListMembers(ctx, req.GetAccessListName())
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	return &accesslistv1.CountAccessListMembersResponse{Count: membersCount, ListCount: listCount}, nil
+          }
+
+          func (s *AccessListServiceOSS) GetAccessListMember(ctx context.Context, req *accesslistv1.GetAccessListMemberRequest) (*accesslistv1.Member, error) {
+          	member, err := s.svc.GetAccessListMember(ctx, req.GetAccessList(), req.GetMemberName())
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	return conv.ToMemberProto(member), nil
+          }
+
+          func (s *AccessListServiceOSS) UpsertAccessListWithMembers(ctx context.Context, req *accesslistv1.UpsertAccessListWithMembersRequest) (*accesslistv1.UpsertAccessListWithMembersResponse, error) {
+          	al, err := conv.FromProto(req.GetAccessList())
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	var members []*accesslist.AccessListMember
+          	for _, m := range req.GetMembers() {
+          		member, err := conv.FromMemberProto(m)
+          		if err != nil {
+          			return nil, trace.Wrap(err)
+          		}
+          		members = append(members, member)
+          	}
+          	resultAL, resultMembers, err := s.svc.UpsertAccessListWithMembers(ctx, al, members)
+          	if err != nil {
+          		return nil, trace.Wrap(err)
+          	}
+          	outMembers := make([]*accesslistv1.Member, 0, len(resultMembers))
+          	for _, m := range resultMembers {
+          		outMembers = append(outMembers, conv.ToMemberProto(m))
+          	}
+          	return &accesslistv1.UpsertAccessListWithMembersResponse{
+          		AccessList: conv.ToProto(resultAL),
+          		Members:    outMembers,
+          	}, nil
+          }
+          GOEOF
+          # Fix leading whitespace from heredoc indentation
+          sed -i 's/^          //' lib/auth/accesslist_service_oss.go
+          echo "Patch 6 applied: lib/auth/accesslist_service_oss.go created"
+
+          # Patch 7: Register AccessListServiceOSS in grpcserver.go
+          python3 << 'PYEOF'
+          with open("lib/auth/grpcserver.go", "r") as f:
+              content = f.read()
+
+          # Add import for accesslistv1
+          import_line = '\taccesslistv1pb "github.com/gravitational/teleport/api/gen/proto/go/teleport/accesslist/v1"'
+          # Find the import block and add it
+          if import_line not in content:
+              # Add after an existing import line
+              anchor = '"github.com/gravitational/teleport/api/constants"'
+              if anchor in content:
+                  content = content.replace(
+                      anchor,
+                      anchor + '\n' + import_line
+                  )
+
+          # Add registration before authpb.RegisterAuthServiceServer
+          registration = '''
+          	// Access List service (OSS handler)
+          	accessListOSS := NewAccessListServiceOSS(cfg.AuthServer)
+          	accesslistv1pb.RegisterAccessListServiceServer(server, accessListOSS)
+
+          '''
+          anchor_reg = '\tauthpb.RegisterAuthServiceServer(server, authServer)'
+          if 'RegisterAccessListServiceServer' not in content:
+              content = content.replace(anchor_reg, registration + anchor_reg)
+
+          with open("lib/auth/grpcserver.go", "w") as f:
+              f.write(content)
+          print("Patch 7 applied: AccessListServiceOSS registered in grpcserver.go")
+          PYEOF
+
           echo "=== Verify patches ==="
           grep -n "IsOSSBuild" lib/services/github.go && echo "WARNING" || echo "Patch 1 OK"
           grep -n "Spec.EndpointURL" api/types/github.go && echo "Patch 2 OK" || echo "WARNING: Patch 2 failed"
           grep -n "patched: skip" lib/auth/github.go && echo "Patch 3 OK" || echo "Patch 3 skipped"
           grep -n "Bearer" lib/auth/github.go && echo "Patch 4 OK" || echo "WARNING: Patch 4 failed"
           grep -A1 "VerifyAccessListCreateLimit" lib/services/local/access_list.go | grep -q "return nil" && echo "Patch 5 OK" || echo "WARNING: Patch 5 failed"
+          test -f lib/auth/accesslist_service_oss.go && echo "Patch 6 OK" || echo "WARNING: Patch 6 failed"
+          grep -q "RegisterAccessListServiceServer" lib/auth/grpcserver.go && echo "Patch 7 OK" || echo "WARNING: Patch 7 failed"
 
       - name: Create Dockerfile
         run: |
