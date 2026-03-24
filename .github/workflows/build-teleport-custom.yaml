@@ -38,7 +38,7 @@ jobs:
           git clone --depth 1 --branch ${{ github.event.inputs.teleport_version }} \
             https://github.com/gravitational/teleport.git /tmp/teleport
 
-      - name: Apply patch — remove endpoint_url Enterprise restrictions
+      - name: Apply patches — Enterprise feature unlock
         run: |
           cd /tmp/teleport
 
@@ -153,11 +153,48 @@ jobs:
               f.write(content)
           PYEOF
 
+          # Patch 5: lib/services/local/access_list.go — Remove Access List create limit
+          # VerifyAccessListCreateLimit gates Access List creation to 1 in OSS.
+          # Replace function body with "return nil" to remove the limit.
+          python3 << 'PYEOF'
+          with open("lib/services/local/access_list.go", "r") as f:
+              lines = f.read().split('\n')
+
+          new_lines = []
+          skip = False
+          brace_count = 0
+          func_found = False
+          for line in lines:
+              if 'func' in line and 'VerifyAccessListCreateLimit' in line and '{' in line:
+                  new_lines.append(line)
+                  new_lines.append('\treturn nil')
+                  skip = True
+                  brace_count = line.count('{') - line.count('}')
+                  func_found = True
+                  continue
+              if skip:
+                  brace_count += line.count('{') - line.count('}')
+                  if brace_count <= 0:
+                      new_lines.append('}')
+                      skip = False
+                  continue
+              new_lines.append(line)
+
+          with open("lib/services/local/access_list.go", "w") as f:
+              f.write('\n'.join(new_lines))
+
+          if func_found:
+              print("Patch 5 applied: lib/services/local/access_list.go (VerifyAccessListCreateLimit)")
+          else:
+              print("WARNING: Patch 5 failed — VerifyAccessListCreateLimit not found")
+          PYEOF
+
           echo "=== Verify patches ==="
           grep -n "IsOSSBuild" lib/services/github.go && echo "WARNING" || echo "Patch 1 OK"
           grep -n "Spec.EndpointURL" api/types/github.go && echo "Patch 2 OK" || echo "WARNING: Patch 2 failed"
           grep -n "patched: skip" lib/auth/github.go && echo "Patch 3 OK" || echo "Patch 3 skipped"
           grep -n "Bearer" lib/auth/github.go && echo "Patch 4 OK" || echo "WARNING: Patch 4 failed"
+          grep -A1 "VerifyAccessListCreateLimit" lib/services/local/access_list.go | grep -q "return nil" && echo "Patch 5 OK" || echo "WARNING: Patch 5 failed"
 
       - name: Create Dockerfile
         run: |
