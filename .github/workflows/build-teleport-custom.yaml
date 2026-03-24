@@ -189,6 +189,42 @@ jobs:
               print("WARNING: Patch 5 failed — VerifyAccessListCreateLimit not found")
           PYEOF
 
+          # Patch 8: lib/auth/auth_with_roles.go — Remove role feature support checks
+          # checkRoleFeatureSupport blocks thresholds, review_requests, search_as_roles,
+          # request_access: reason/always in OSS. Replace body with return nil.
+          python3 << 'PYEOF'
+          with open("lib/auth/auth_with_roles.go", "r") as f:
+              lines = f.read().split('\n')
+
+          new_lines = []
+          skip = False
+          brace_count = 0
+          func_found = False
+          for line in lines:
+              if line.strip().startswith('func') and 'checkRoleFeatureSupport' in line and '{' in line:
+                  new_lines.append(line)
+                  new_lines.append('\treturn nil')
+                  skip = True
+                  brace_count = line.count('{') - line.count('}')
+                  func_found = True
+                  continue
+              if skip:
+                  brace_count += line.count('{') - line.count('}')
+                  if brace_count <= 0:
+                      new_lines.append('}')
+                      skip = False
+                  continue
+              new_lines.append(line)
+
+          with open("lib/auth/auth_with_roles.go", "w") as f:
+              f.write('\n'.join(new_lines))
+
+          if func_found:
+              print("Patch 8 applied: lib/auth/auth_with_roles.go (checkRoleFeatureSupport)")
+          else:
+              print("WARNING: Patch 8 failed — checkRoleFeatureSupport not found")
+          PYEOF
+
           # Patch 6: Create AccessListService gRPC handler for OSS
           # The gRPC handler is Enterprise-only. Create a minimal OSS handler
           # that delegates to the backend AccessListsInternal service.
@@ -388,6 +424,7 @@ jobs:
           grep -A1 "VerifyAccessListCreateLimit" lib/services/local/access_list.go | grep -q "return nil" && echo "Patch 5 OK" || echo "WARNING: Patch 5 failed"
           test -f lib/auth/accesslist_service_oss.go && echo "Patch 6 OK" || echo "WARNING: Patch 6 failed"
           grep -q "RegisterAccessListServiceServer" lib/auth/grpcserver.go && echo "Patch 7 OK" || echo "WARNING: Patch 7 failed"
+          grep -A1 "checkRoleFeatureSupport" lib/auth/auth_with_roles.go | grep -q "return nil" && echo "Patch 8 OK" || echo "WARNING: Patch 8 failed"
 
       - name: Create Dockerfile
         run: |
