@@ -165,7 +165,7 @@ jobs:
           brace_count = 0
           func_found = False
           for line in lines:
-              if 'func' in line and 'VerifyAccessListCreateLimit' in line and '{' in line:
+              if line.strip().startswith('func') and 'VerifyAccessListCreateLimit' in line and '{' in line:
                   new_lines.append(line)
                   new_lines.append('\treturn nil')
                   skip = True
