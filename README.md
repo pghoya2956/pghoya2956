@@ -1,6 +1,6 @@
 # Heeho Lim
 
-**DevOps Engineer** | End-to-End DevOps. 인프라부터 AI까지.
+**AI Agent Infrastructure Engineer** | AI 에이전트가 실제로 일할 수 있게 만드는 런타임과 운영 체계를 구축합니다.
 
 [![Portfolio](https://img.shields.io/badge/Portfolio-heeho.net-4f46e5?style=for-the-badge)](https://www.heeho.net/)
 
@@ -34,6 +34,7 @@
 ## Certifications
 
 <p>
+  <a href="https://badges.n8n.io/a2020a8a-069a-4746-9c68-03ee4c7bc1aa"><img src="https://eu.images.credential.net/badge/tiny/p3xvuxgs_1780375268457_badge.png" alt="n8n Certified Expert Partner" width="80"/></a>
   <a href="https://www.credly.com/badges/17c631c3-44d2-4670-b27f-a5c7e696fbff"><img src="https://images.credly.com/size/100x100/images/8b8ed108-e77d-4396-ac59-2504583b9d54/cka_from_cncfsite__281_29.png" alt="CKA" width="80"/></a>
   <a href="https://www.credly.com/badges/fb7b66e0-bc45-4b52-94d9-3fd4353135fd"><img src="https://images.credly.com/size/100x100/images/0e284c3f-5164-4b21-8660-0d84737941bc/image.png" alt="AWS SAA" width="80"/></a>
   <a href="https://www.credly.com/badges/fd23f25b-6ad9-4474-962d-38a178f79cca"><img src="https://images.credly.com/size/100x100/images/d8750433-c4c3-4e7e-bafd-787b4106c78b/image.png" alt="GitLab PTE" width="80"/></a>
