@@ -1,6 +1,6 @@
 # Heeho Lim
 
-**DevOps Engineer** | End-to-End DevOps. 인프라부터 AI까지.
+**AI Agent Infrastructure Engineer** | AI 에이전트가 실제로 일할 수 있게 만드는 런타임과 운영 체계를 구축합니다.
 
 [![Portfolio](https://img.shields.io/badge/Portfolio-heeho.net-4f46e5?style=for-the-badge)](https://www.heeho.net/)
 
