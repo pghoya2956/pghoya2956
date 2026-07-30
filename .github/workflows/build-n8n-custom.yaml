@@ -33,7 +33,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Set up QEMU (for ARM64)
+      - name: Set up QEMU (ARM64 은 에뮬레이션, AMD64 는 네이티브)
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
@@ -240,7 +240,7 @@ jobs:
         with:
           context: /tmp
           file: /tmp/Dockerfile
-          platforms: linux/arm64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.n8n_version }}
