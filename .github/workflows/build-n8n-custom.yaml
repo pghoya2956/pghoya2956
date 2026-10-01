@@ -188,12 +188,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '26'
 
       - name: Install pnpm and build
         working-directory: /tmp/n8n
         run: |
-          corepack enable
+          # Node 25+ 배포판에 corepack 이 없다 — setup-node 가 받는 tarball 에 포함되지 않음
+          corepack enable || npm i -g pnpm@12.4.2
           pnpm install --frozen-lockfile
           pnpm build
           pnpm --filter=n8n --prod --legacy deploy --no-optional /tmp/compiled
