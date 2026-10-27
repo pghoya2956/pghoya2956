@@ -42,6 +42,23 @@ jobs:
         with:
           platforms: arm64
 
+      - name: Free disk space
+        # n8n 모노레포의 pnpm install 이 러너 루트 파일시스템을 채운다
+        # (2026-10-27 실측: "Disk quota exceeded (os error 122)").
+        # 사전설치 툴체인을 지워 /tmp 가 쓸 공간을 확보한다. 이 빌드는
+        # 쓰지 않는 것들이다.
+        run: |
+          echo "=== before ==="; df -h / /mnt 2>/dev/null || df -h /
+          sudo rm -rf /usr/local/lib/android \
+                      /usr/share/dotnet \
+                      /opt/ghc \
+                      /usr/local/.ghcup \
+                      /usr/local/share/boost \
+                      /opt/hostedtoolcache/CodeQL \
+                      /usr/share/swift || true
+          sudo docker image prune -af || true
+          echo "=== after ==="; df -h /
+
       - name: Clone n8n source
         run: |
           git clone --depth 1 --branch "n8n@${{ github.event.inputs.n8n_version }}" \
