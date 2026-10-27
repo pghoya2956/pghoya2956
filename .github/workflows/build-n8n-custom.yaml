@@ -256,18 +256,18 @@ jobs:
           # 경로를 바꾸지 않는다. PATH(/home/node/.n8n/bin)와 mcp.json 의
           # 절대경로(/home/node/.n8n/claude-cli/bin/mcp-remote)가 이 자리를 가리킨다.
           RUN set -eux; \
-              case "${TARGETARCH}" in \
+              case "\${TARGETARCH}" in \
                 arm64) TY=aarch64-unknown-linux-musl; PD=linux-arm64; KA=arm64 ;; \
                 amd64) TY=x86_64-unknown-linux-musl;  PD=linux-amd64; KA=amd64 ;; \
-                *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+                *) echo "unsupported TARGETARCH=\${TARGETARCH}" >&2; exit 1 ;; \
               esac; \
-              wget -qO- "https://github.com/typst/typst/releases/download/v0.12.0/typst-${TY}.tar.xz" \
-                | tar -xJ -C /home/node/.n8n/bin --strip-components=1 typst-${TY}/typst; \
-              wget -qO- "https://github.com/jgm/pandoc/releases/download/3.6.4/pandoc-3.6.4-${PD}.tar.gz" \
+              wget -qO- "https://github.com/typst/typst/releases/download/v0.12.0/typst-\${TY}.tar.xz" \
+                | tar -xJ -C /home/node/.n8n/bin --strip-components=1 typst-\${TY}/typst; \
+              wget -qO- "https://github.com/jgm/pandoc/releases/download/3.6.4/pandoc-3.6.4-\${PD}.tar.gz" \
                 | tar -xz -C /home/node/.n8n/bin --strip-components=2 pandoc-3.6.4/bin/pandoc; \
-              wget -qO /home/node/.n8n/bin/kubectl "https://dl.k8s.io/release/v1.31.0/bin/linux/${KA}/kubectl"; \
+              wget -qO /home/node/.n8n/bin/kubectl "https://dl.k8s.io/release/v1.31.0/bin/linux/\${KA}/kubectl"; \
               chmod +x /home/node/.n8n/bin/kubectl; \
-              printf '#!/bin/sh\nexec /bin/sh "$@"\n' > /home/node/.n8n/bin/bash; \
+              printf '#!/bin/sh\nexec /bin/sh "\$@"\n' > /home/node/.n8n/bin/bash; \
               chmod +x /home/node/.n8n/bin/bash; \
               /home/node/.n8n/bin/typst --version; \
               /home/node/.n8n/bin/pandoc --version | head -1
