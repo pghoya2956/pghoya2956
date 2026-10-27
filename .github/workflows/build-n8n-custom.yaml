@@ -18,7 +18,10 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # ubuntu-latest 를 쓰지 않는다. 2026-10-19 부터 Ubuntu 26 으로 넘어갔고
+    # 그 이미지에서 pnpm install 이 EDQUOT(os error 122)로 죽는다 — 디스크를
+    # 116G 비워도 같다. 2026-10-01 성공 빌드가 돈 24.04 로 고정한다.
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
