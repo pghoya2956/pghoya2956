@@ -7,6 +7,10 @@ on:
         description: 'n8n version (e.g. 2.9.4)'
         required: true
         default: '2.9.4'
+      image_tag:
+        description: '이미지 태그. 비우면 n8n_version 을 쓴다. 도구 내장 빌드는 <버전>-toolsN 을 쓴다 (기존 태그를 덮지 않기 위함)'
+        required: false
+        default: ''
 
 env:
   REGISTRY: ghcr.io
@@ -223,10 +227,50 @@ jobs:
           WORKDIR /home/node
           COPY --from=builder /usr/local/lib/node_modules/n8n /usr/local/lib/node_modules/n8n
           COPY docker-entrypoint.sh /
+          ARG TARGETARCH
           RUN ln -s /usr/local/lib/node_modules/n8n/bin/n8n /usr/local/bin/n8n && \
-              mkdir -p /home/node/.n8n && \
-              chown -R node:node /home/node && \
+              mkdir -p /home/node/.n8n/bin /home/node/.n8n/claude-cli /home/node/.n8n/nodes && \
               rm -rf /root/.npm /tmp/*
+
+          # --- 부가 도구 내장 (task 20261015) ---
+          # 경로를 바꾸지 않는다. PATH(/home/node/.n8n/bin)와 mcp.json 의
+          # 절대경로(/home/node/.n8n/claude-cli/bin/mcp-remote)가 이 자리를 가리킨다.
+          RUN set -eux; \
+              case "${TARGETARCH}" in \
+                arm64) TY=aarch64-unknown-linux-musl; PD=linux-arm64; KA=arm64 ;; \
+                amd64) TY=x86_64-unknown-linux-musl;  PD=linux-amd64; KA=amd64 ;; \
+                *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+              esac; \
+              wget -qO- "https://github.com/typst/typst/releases/download/v0.12.0/typst-${TY}.tar.xz" \
+                | tar -xJ -C /home/node/.n8n/bin --strip-components=1 typst-${TY}/typst; \
+              wget -qO- "https://github.com/jgm/pandoc/releases/download/3.6.4/pandoc-3.6.4-${PD}.tar.gz" \
+                | tar -xz -C /home/node/.n8n/bin --strip-components=2 pandoc-3.6.4/bin/pandoc; \
+              wget -qO /home/node/.n8n/bin/kubectl "https://dl.k8s.io/release/v1.31.0/bin/linux/${KA}/kubectl"; \
+              chmod +x /home/node/.n8n/bin/kubectl; \
+              printf '#!/bin/sh\nexec /bin/sh "$@"\n' > /home/node/.n8n/bin/bash; \
+              chmod +x /home/node/.n8n/bin/bash; \
+              /home/node/.n8n/bin/typst --version; \
+              /home/node/.n8n/bin/pandoc --version | head -1
+
+          # Claude CLI, mcp-remote, community node (전부 버전 고정)
+          # --omit=peer 필수: n8n-nodes-mcp 의 peer 인 n8n-workflow 를 npm 이 자동
+          # 설치하면 isolated-vm 을 끌어와 node-gyp 컴파일로 넘어가고 base 이미지에
+          # 빌드 도구가 없어 실패한다. 라이브 PVC 에도 isolated-vm 이 없다 —
+          # community node 는 n8n 프로세스 안에서 로드되므로 peer 는 런타임이 준다.
+          # 한 RUN 으로 묶고 캐시를 지워 레이어 비대화를 막는다.
+          RUN set -eux; \
+              export npm_config_cache=/tmp/npmcache; \
+              npm install -g --prefix /home/node/.n8n/claude-cli --no-audit --no-fund \
+                @anthropic-ai/claude-code@2.1.70 mcp-remote@0.1.38; \
+              printf '%s' '{"name":"installed-nodes","private":true}' > /home/node/.n8n/nodes/package.json; \
+              npm install --prefix /home/node/.n8n/nodes --no-audit --no-fund --omit=dev --omit=peer \
+                n8n-nodes-mcp@0.1.37 n8n-nodes-notionmd@0.1.0; \
+              npm cache clean --force || true; \
+              rm -rf /tmp/npmcache /root/.npm; \
+              /home/node/.n8n/claude-cli/bin/claude --version; \
+              test ! -d /home/node/.n8n/nodes/node_modules/isolated-vm
+
+          RUN chown -R node:node /home/node
           EXPOSE 5678/tcp
           USER node
           ENTRYPOINT ["tini", "--", "/docker-entrypoint.sh"]
@@ -243,8 +287,6 @@ jobs:
           file: /tmp/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.n8n_version }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag || github.event.inputs.n8n_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
